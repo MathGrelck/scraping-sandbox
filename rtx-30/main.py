@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import urllib3
 import re
 import os
+import json
+from json.decoder import JSONDecodeError
 
 # Create credentials.py (git ignored) and specify your phone number, e.g. PHONE_NUMBER = "+4512345678"
 from credentials import PHONE_NUMBER
@@ -9,6 +11,20 @@ from credentials import PHONE_NUMBER
 
 class ScraperReporter(object):
     def __init__(self):
+        self.scraping_status = {"did-write": 0}
+        
+        with open('status.json','a+') as f:
+            f.seek(0)
+            try:
+                prev_scraping_status = json.load(f)
+                if prev_scraping_status['did-write'] == 1:
+                    exit()
+                else:
+                    self.scraping_status = prev_scraping_status
+            except JSONDecodeError:
+                # first run, empty status file
+                json.dump(self.scraping_status, f)
+
         self.cards = {}
     
     def addScraper(self, card):
@@ -29,6 +45,10 @@ class ScraperReporter(object):
             stocklevel = card.getStockLevel()
             card.report()
             if stocklevel > 0:
+                with open('status.json','w+') as f:
+                    self.scraping_status['did-write'] = 1
+                    json.dump(self.scraping_status,f)
+
                 message = name+": "+str(stocklevel)+" in stock!"
                 self.notify(message, card.url)
                 self.sendiMessage(message+" "+card.url)
