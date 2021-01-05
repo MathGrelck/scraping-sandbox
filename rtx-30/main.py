@@ -2,8 +2,12 @@ from bs4 import BeautifulSoup
 import urllib3
 import re
 import os
+import sys
 import json
 from json.decoder import JSONDecodeError
+import time
+import datetime
+from threading import Thread
 
 # Create credentials.py (git ignored) and specify your phone number, e.g. PHONE_NUMBER = "+4512345678"
 from credentials import PHONE_NUMBER
@@ -11,28 +15,24 @@ from credentials import PHONE_NUMBER
 
 class ScraperReporter(object):
     def __init__(self):
-        self.scraping_status = {"did-write": 0}
+        self.scraping_status = {'start-time': datetime.datetime.now().isoformat()}
         
         with open('status.json','a+') as f:
             f.seek(0)
             try:
-                prev_scraping_status = json.load(f)
-                if prev_scraping_status['did-write'] == 1:
-                    exit()
-                else:
-                    self.scraping_status = prev_scraping_status
+                self.scraping_status = json.load(f)
             except JSONDecodeError:
                 # first run, empty status file
-                json.dump(self.scraping_status, f)
+                json.dump(self.scraping_status, f, indent=4)
 
-        self.cards = {}
+        self.scrapers = {}
     
-    def addScraper(self, card):
-        self.cards[card.name] = card
+    def addScraper(self, scraper):
+        self.scrapers[scraper.name] = scraper
 
     def notify(self, message, url):
         """Make sure to `brew install terminal-notifier`"""
-        t = '-title {!r}'.format('🥳')
+        t = '-title {!r}'.format('ALERT')
         m = '-message {!r}'.format(message)
         l = '-open {!r}'.format(url)
         os.system('terminal-notifier {}'.format(' '.join([t,m,l])))
@@ -41,25 +41,24 @@ class ScraperReporter(object):
         os.system("osascript sendMessage.scpt "+PHONE_NUMBER+" "+"'"+message+"' ")
 
     def report(self):
-        for name, card in self.cards.items():
-            stocklevel = card.getStockLevel()
-            card.report()
+        for name, scraper in self.scrapers.items():
+            stocklevel = scraper.getStockLevel()
             if stocklevel > 0:
+                self.scraping_status[name]['latest-time'] = datetime.datetime.now().isoformat()
+                self.scraping_status[name]['stocklevel'] = stocklevel
+                if not ('notified-time' in self.scraping_status[name].keys()):
+                    self.scraping_status[name]['notified-time'] = datetime.datetime.now().isoformat(),
+                    self.scraping_status[name]['url'] = scraper.url
+                    message = name+": "+str(stocklevel)+" in stock!"
+                    self.notify(message, scraper.url)
+                    self.sendiMessage(message+" "+scraper.url)
                 with open('status.json','w+') as f:
-                    self.scraping_status['did-write'] = 1
-                    json.dump(self.scraping_status,f)
-
-                message = name+": "+str(stocklevel)+" in stock!"
-                self.notify(message, card.url)
-                self.sendiMessage(message+" "+card.url)
+                    json.dump(self.scraping_status, f, indent=4)
 
 
 class Scraper(ScraperReporter):
     def __init__(self, reporter, name=""):
-        if name == "":
-            self.name = html_class_name
-        else:
-            self.name = name
+        self.name = name
         self.url = None
         self.html_class_name = None
         self.pattern = None
@@ -105,9 +104,14 @@ class Scraper(ScraperReporter):
         print("Stock level: " + str(self.stocklevel))
 
 
+answer = None
+def check():
+    global answer
+    answer = input("Enter any character to quit, then hit enter: ")
+
+
 if __name__ == "__main__":
     Scraper_Reporter = ScraperReporter()
-    
     # Test for positive stock
     gt710_msi = Scraper(Scraper_Reporter, name="gt710_msi")
     gt710_msi.setUrl("https://www.proshop.dk/Grafikkort/MSI-GeForce-GT-710-Silent-2GB-GDDR3-RAM-Grafikkort/2532822")
@@ -130,7 +134,13 @@ if __name__ == "__main__":
     komplett_rtx3060Ti_gigabyte.setUrl("https://www.komplett.dk/product/1174510/hardware/pc-komponenter/grafikkort/gigabyte-geforce-rtx-3060-ti-gaming-oc-pro")
     # komplett_rtx3060Ti_gigabyte.setUrl("https://www.komplett.dk/product/921791/hardware/pc-komponenter/grafikkort/asus-geforce-gt-1030-2gb-silent")
     komplett_rtx3060Ti_gigabyte.setHtmlClassName("stockstatus-stock-details")
-    komplett_rtx3060Ti_gigabyte.setPattern("(\d+) stk. på lager")
+    komplett_rtx3060Ti_gigabyte.setPattern("(\d+) stk. p&#xE5; lager")
 
-    Scraper_Reporter.report()
+    Thread(target = check).start()
+    while True:
+        Scraper_Reporter.report()
+        for t in range(30):
+            time.sleep(1)
+            if answer != None:
+                exit()
 
