@@ -44,6 +44,10 @@ class ScraperReporter(object):
         for name, scraper in self.scrapers.items():
             stocklevel = scraper.getStockLevel()
             if stocklevel > 0:
+                try:
+                    self.scraping_status[name]
+                except KeyError:
+                    self.scraping_status[name] = {}
                 self.scraping_status[name]['latest-time'] = datetime.datetime.now().isoformat()
                 self.scraping_status[name]['stocklevel'] = stocklevel
                 if not ('notified-time' in self.scraping_status[name].keys()):
@@ -52,6 +56,7 @@ class ScraperReporter(object):
                     message = name+": "+str(stocklevel)+" in stock!"
                     self.notify(message, scraper.url)
                     self.sendiMessage(message+" "+scraper.url)
+                    print(message)
                 with open('status.json','w+') as f:
                     json.dump(self.scraping_status, f, indent=4)
 
@@ -104,28 +109,22 @@ class Scraper(ScraperReporter):
         print("Stock level: " + str(self.stocklevel))
 
 
-answer = None
-def check():
-    global answer
-    answer = input("Enter any character to quit, then hit enter: ")
-
-
 if __name__ == "__main__":
     Scraper_Reporter = ScraperReporter()
     # Test for positive stock
     gt710_msi = Scraper(Scraper_Reporter, name="gt710_msi")
-    gt710_msi.setUrl("https://www.proshop.dk/Grafikkort/MSI-GeForce-GT-710-Silent-2GB-GDDR3-RAM-Grafikkort/2532822")
+    gt710_msi.setUrl("https://www.proshop.dk/Grafikkort/ASUS-GeForce-GT-1030-Silent-Low-Profile-2GB-GDDR5-RAM-Grafikkort/2592767")
     gt710_msi.setHtmlClassName("site-stock pull-right")
     gt710_msi.setPattern("\d+")
 
     # Proshop
     proshop_rtx3060Ti_asus = Scraper(Scraper_Reporter, name="Proshop Asus")
-    proshop_rtx3060Ti_asus.setUrl("https://www.proshop.dk/Grafikkort/ASUS-GeForce-RTX-3060-Ti-TUF-OC-8GB-GDDR6-RAM-Grafikkort/2886986")
+    proshop_rtx3060Ti_asus.setUrl("https://www.proshop.dk/Grafikkort/ASUS-GeForce-RTX-3070-Ti-ROG-STRIX-OC-8GB-GDDR6X-RAM-Grafikkort/2958603")
     proshop_rtx3060Ti_asus.setHtmlClassName("site-stock pull-right")
     proshop_rtx3060Ti_asus.setPattern("\d+")
     
     proshop_rtx3060Ti_gigabyte = Scraper(Scraper_Reporter, name="Proshop Gigabyte")
-    proshop_rtx3060Ti_gigabyte.setUrl("https://www.proshop.dk/Grafikkort/GIGABYTE-GeForce-RTX-3060-Ti-GAMING-OC-PRO-8GB-GDDR6-RAM-Grafikkort/2887738")
+    proshop_rtx3060Ti_gigabyte.setUrl("https://www.proshop.dk/Grafikkort/GIGABYTE-GeForce-RTX-3070-GAMING-OC-LHR-8GB-GDDR6-RAM-Grafikkort/2963700")
     proshop_rtx3060Ti_gigabyte.setHtmlClassName("site-stock pull-right")
     proshop_rtx3060Ti_gigabyte.setPattern("\d+")
 
@@ -136,11 +135,7 @@ if __name__ == "__main__":
     komplett_rtx3060Ti_gigabyte.setHtmlClassName("stockstatus-stock-details")
     komplett_rtx3060Ti_gigabyte.setPattern("(\d+) stk. p&#xE5; lager")
 
-    Thread(target = check).start()
     while True:
         Scraper_Reporter.report()
-        for t in range(30):
-            time.sleep(1)
-            if answer != None:
-                exit()
+        time.sleep(30)
 

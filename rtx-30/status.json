@@ -1,9 +1,27 @@
 {
-    "start-time": "2021-01-05T22:00:55.738469",
+    "start-time": "2022-08-07T14:15:11.705832",
     "gt710_msi": {
-        "notified-time": "2021-01-05T22:05:09.273816",
-        "url": "https://www.proshop.dk/Grafikkort/MSI-GeForce-GT-710-Silent-2GB-GDDR3-RAM-Grafikkort/2532822",
-        "latest-time": "2021-01-05T22:10:48.449437",
-        "stocklevel": 16
+        "latest-time": "2022-08-07T14:15:11.895815",
+        "stocklevel": 15,
+        "notified-time": [
+            "2022-08-07T14:15:11.895845"
+        ],
+        "url": "https://www.proshop.dk/Grafikkort/ASUS-GeForce-GT-1030-Silent-Low-Profile-2GB-GDDR5-RAM-Grafikkort/2592767"
+    },
+    "Proshop Asus": {
+        "latest-time": "2022-08-07T14:15:13.318171",
+        "stocklevel": 16,
+        "notified-time": [
+            "2022-08-07T14:15:13.318190"
+        ],
+        "url": "https://www.proshop.dk/Grafikkort/ASUS-GeForce-RTX-3070-Ti-ROG-STRIX-OC-8GB-GDDR6X-RAM-Grafikkort/2958603"
+    },
+    "Proshop Gigabyte": {
+        "latest-time": "2022-08-07T14:15:14.395481",
+        "stocklevel": 20,
+        "notified-time": [
+            "2022-08-07T14:15:14.395504"
+        ],
+        "url": "https://www.proshop.dk/Grafikkort/GIGABYTE-GeForce-RTX-3070-GAMING-OC-LHR-8GB-GDDR6-RAM-Grafikkort/2963700"
     }
 }
